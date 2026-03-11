@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Peptides">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Peptide Tracker</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #1a1118;
+      --surface2: #1f1520;
+      --accent: #f48fb1;
+      --accent2: #f8bbd0;
+      --cream: #f5e6d3;
+      --text: #f5e6d3;
+      --text-dim: #a89585;
+      --success: #f48fb1;
+      --warning: #ffb347;
+      --danger: #ff6b6b;
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--surface), var(--surface2));
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(244, 143, 177, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    nav {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: var(--radius);
+    }
+
+    nav button {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    nav button.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: var(--accent2);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select, textarea {
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+    }
+
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    /* Log entries */
+    .log-entry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .log-entry .info { flex: 1; }
+
+    .log-entry .peptide-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .log-entry .details {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .log-entry .dose-badge {
+      background: rgba(244, 143, 177, 0.2);
+      color: var(--accent2);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-right: 12px;
+      white-space: nowrap;
+    }
+
+    .log-entry .delete-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .log-entry .delete-btn:hover { opacity: 1; color: var(--danger); }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-dim);
+    }
+
+    /* Calculator result */
+    .calc-result {
+      background: linear-gradient(135deg, rgba(244,143,177,0.15), rgba(255,107,157,0.1));
+      border: 1px solid rgba(244,143,177,0.3);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .calc-result .big-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .calc-result .unit { color: var(--text-dim); font-size: 0.9rem; }
+
+    .calc-breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .calc-breakdown .item {
+      background: var(--bg);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .calc-breakdown .item .val {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--success);
+    }
+
+    .calc-breakdown .item .lbl {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* Inventory */
+    .inv-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .inv-item .remaining {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .inv-item .remaining.low { color: var(--warning); }
+    .inv-item .remaining.out { color: var(--danger); }
+
+    .progress-bar {
+      width: 100px;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-bar .fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    /* Schedule */
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .schedule-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .schedule-dot.due { background: var(--warning); animation: pulse 1.5s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,179,71,0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(255,179,71,0); }
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-row select, .filter-row input {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .stat-card .val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    .stat-card .lbl {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .stat-cards { grid-template-columns: 1fr; }
+      .calc-breakdown { grid-template-columns: 1fr; }
+      nav { flex-wrap: wrap; }
+      nav button { font-size: 0.75rem; padding: 6px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Peptide Tracker</h1>
+  <nav>
+    <button class="active" onclick="showTab('log')">Log</button>
+    <button onclick="showTab('calculator')">Calculator</button>
+    <button onclick="showTab('inventory')">Inventory</button>
+    <button onclick="showTab('schedule')">Schedule</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ==================== LOG TAB ==================== -->
+  <div id="tab-log" class="tab active">
+    <div class="stat-cards" id="stats"></div>
+
+    <div class="card">
+      <h2>Log a Dose</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Peptide</label>
+          <select id="log-peptide">
+            <option value="">Select or type below</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Or add new</label>
+          <input type="text" id="log-peptide-new" placeholder="e.g. BPC-157">
+        </div>
+        <div class="form-group">
+          <label>Dose (mcg)</label>
+          <input type="number" id="log-dose" placeholder="250">
+        </div>
+        <div class="form-group">
+          <label>Route</label>
+          <select id="log-route">
+            <option>Subcutaneous</option>
+            <option>Intramuscular</option>
+            <option>Oral</option>
+            <option>Nasal</option>
+            <option>Topical</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Injection Site</label>
+          <input type="text" id="log-site" placeholder="e.g. abdomen, delt">
+        </div>
+        <div class="form-group">
+          <label>Date & Time</label>
+          <input type="datetime-local" id="log-datetime">
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="log-notes" placeholder="How you feel, side effects, etc."></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addLog()">Log Dose</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>History</h2>
+      <div class="filter-row">
+        <select id="filter-peptide" onchange="renderLogs()">
+          <option value="">All Peptides</option>
+        </select>
+        <input type="date" id="filter-date" onchange="renderLogs()">
+      </div>
+      <div id="log-list"></div>
+    </div>
+  </div>
+
+  <!-- ==================== CALCULATOR TAB ==================== -->
+  <div id="tab-calculator" class="tab">
+    <div class="card">
+      <h2>Reconstitution Calculator</h2>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px;">Calculate how much to draw based on your vial and desired dose.</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Peptide Amount in Vial (mg)</label>
+          <input type="number" id="calc-vial-mg" placeholder="5" step="any">
+        </div>
+        <div class="form-group">
+          <label>BAC Water Added (mL)</label>
+          <input type="number" id="calc-water-ml" placeholder="2" step="any">
+        </div>
+        <div class="form-group">
+          <label>Desired Dose (mcg)</label>
+          <input type="number" id="calc-dose-mcg" placeholder="250" step="any">
+        </div>
+        <div class="form-group">
+          <label>Syringe Type</label>
+          <select id="calc-syringe">
+            <option value="100">Insulin (100 units = 1mL)</option>
+            <option value="50">0.5mL syringe (50 units)</option>
+            <option value="30">0.3mL syringe (30 units)</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="calculate()">Calculate</button>
+      </div>
+      <div id="calc-result"></div>
+    </div>
+
+    <div class="card">
+      <h2>Quick Dose Reference</h2>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px;">Saved calculations for your current vials.</p>
+      <div id="saved-calcs"></div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="saveCurrentCalc()">Save Current Calculation</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Unit Converter</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Value</label>
+          <input type="number" id="conv-value" placeholder="1" step="any" oninput="convert()">
+        </div>
+        <div class="form-group">
+          <label>Convert</label>
+          <select id="conv-type" onchange="convert()">
+            <option value="mg-mcg">mg to mcg</option>
+            <option value="mcg-mg">mcg to mg</option>
+            <option value="ml-units">mL to units (insulin)</option>
+            <option value="units-ml">units to mL (insulin)</option>
+          </select>
+        </div>
+      </div>
+      <div id="conv-result" style="margin-top:12px;font-size:1.1rem;font-weight:600;color:var(--success);"></div>
+    </div>
+  </div>
+
+  <!-- ==================== INVENTORY TAB ==================== -->
+  <div id="tab-inventory" class="tab">
+    <div class="card">
+      <h2>Add Vial to Inventory</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Peptide</label>
+          <input type="text" id="inv-name" placeholder="BPC-157">
+        </div>
+        <div class="form-group">
+          <label>Vial Size (mg)</label>
+          <input type="number" id="inv-mg" placeholder="5" step="any">
+        </div>
+        <div class="form-group">
+          <label>Date Reconstituted</label>
+          <input type="date" id="inv-recon-date">
+        </div>
+        <div class="form-group">
+          <label>Expiry / Discard By</label>
+          <input type="date" id="inv-expiry">
+        </div>
+        <div class="form-group">
+          <label>Source / Brand</label>
+          <input type="text" id="inv-source" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label>BAC Water Added (mL)</label>
+          <input type="number" id="inv-water" placeholder="2" step="any">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addInventory()">Add Vial</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Current Inventory</h2>
+      <div id="inv-list"></div>
+    </div>
+  </div>
+
+  <!-- ==================== SCHEDULE TAB ==================== -->
+  <div id="tab-schedule" class="tab">
+    <div class="card">
+      <h2>Add Schedule</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Peptide</label>
+          <select id="sched-peptide"></select>
+        </div>
+        <div class="form-group">
+          <label>Dose (mcg)</label>
+          <input type="number" id="sched-dose" placeholder="250">
+        </div>
+        <div class="form-group">
+          <label>Frequency</label>
+          <select id="sched-freq">
+            <option value="daily">Daily</option>
+            <option value="2x-daily">2x Daily</option>
+            <option value="eod">Every Other Day</option>
+            <option value="3x-week">3x per Week</option>
+            <option value="weekly">Weekly</option>
+            <option value="5on2off">5 on / 2 off</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Preferred Time</label>
+          <input type="time" id="sched-time" value="08:00">
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <input type="text" id="sched-notes" placeholder="e.g. take on empty stomach">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addSchedule()">Add Schedule</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Today's Schedule</h2>
+      <div id="today-schedule"></div>
+    </div>
+
+    <div class="card">
+      <h2>All Schedules</h2>
+      <div id="sched-list"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ========== DATA STORE ==========
+  function getData(key) {
+    return JSON.parse(localStorage.getItem('pt_' + key) || '[]');
+  }
+  function setData(key, val) {
+    localStorage.setItem('pt_' + key, JSON.stringify(val));
+  }
+
+  // ========== TABS ==========
+  function showTab(id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.target.classList.add('active');
+    if (id === 'log') { renderLogs(); renderStats(); }
+    if (id === 'inventory') renderInventory();
+    if (id === 'schedule') renderSchedules();
+    refreshPeptideDropdowns();
+  }
+
+  // ========== PEPTIDE LIST ==========
+  function getAllPeptides() {
+    const logs = getData('logs');
+    const inv = getData('inventory');
+    const scheds = getData('schedules');
+    const names = new Set();
+    logs.forEach(l => names.add(l.peptide));
+    inv.forEach(i => names.add(i.name));
+    scheds.forEach(s => names.add(s.peptide));
+    return [...names].filter(Boolean).sort();
+  }
+
+  function refreshPeptideDropdowns() {
+    const peptides = getAllPeptides();
+    ['log-peptide', 'filter-peptide', 'sched-peptide'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const val = el.value;
+      const first = el.options[0]?.text || '';
+      el.innerHTML = '';
+      if (id === 'filter-peptide') el.innerHTML = '<option value="">All Peptides</option>';
+      else el.innerHTML = '<option value="">Select peptide</option>';
+      peptides.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p; opt.textContent = p;
+        el.appendChild(opt);
+      });
+      el.value = val;
+    });
+  }
+
+  // ========== LOGGING ==========
+  function addLog() {
+    let peptide = document.getElementById('log-peptide').value || document.getElementById('log-peptide-new').value.trim();
+    const dose = document.getElementById('log-dose').value;
+    const route = document.getElementById('log-route').value;
+    const site = document.getElementById('log-site').value;
+    const datetime = document.getElementById('log-datetime').value || new Date().toISOString().slice(0, 16);
+    const notes = document.getElementById('log-notes').value;
+
+    if (!peptide) return alert('Please select or enter a peptide name.');
+    if (!dose) return alert('Please enter a dose.');
+
+    const logs = getData('logs');
+    logs.unshift({ id: Date.now(), peptide, dose: parseFloat(dose), route, site, datetime, notes });
+    setData('logs', logs);
+
+    // Update inventory remaining
+    updateInventoryUsage(peptide, parseFloat(dose));
+
+    // Clear form
+    document.getElementById('log-peptide-new').value = '';
+    document.getElementById('log-dose').value = '';
+    document.getElementById('log-site').value = '';
+    document.getElementById('log-notes').value = '';
+
+    renderLogs();
+    renderStats();
+    refreshPeptideDropdowns();
+  }
+
+  function updateInventoryUsage(peptide, doseMcg) {
+    const inv = getData('inventory');
+    const vial = inv.find(i => i.name.toLowerCase() === peptide.toLowerCase() && i.remainingMg > 0);
+    if (vial) {
+      vial.remainingMg = Math.max(0, vial.remainingMg - (doseMcg / 1000));
+      setData('inventory', inv);
+    }
+  }
+
+  function deleteLog(id) {
+    let logs = getData('logs');
+    logs = logs.filter(l => l.id !== id);
+    setData('logs', logs);
+    renderLogs();
+    renderStats();
+  }
+
+  function renderLogs() {
+    const logs = getData('logs');
+    const filterPeptide = document.getElementById('filter-peptide').value;
+    const filterDate = document.getElementById('filter-date').value;
+    const container = document.getElementById('log-list');
+
+    let filtered = logs;
+    if (filterPeptide) filtered = filtered.filter(l => l.peptide === filterPeptide);
+    if (filterDate) filtered = filtered.filter(l => l.datetime.startsWith(filterDate));
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state">No doses logged yet. Start tracking above!</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(l => {
+      const d = new Date(l.datetime);
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      const details = [l.route, l.site, timeStr].filter(Boolean).join(' &middot; ');
+      return `<div class="log-entry">
+        <div class="info">
+          <div class="peptide-name">${l.peptide}</div>
+          <div class="details">${dateStr} &middot; ${details}${l.notes ? '<br>' + l.notes : ''}</div>
+        </div>
+        <span class="dose-badge">${l.dose} mcg</span>
+        <button class="delete-btn" onclick="deleteLog(${l.id})" title="Delete">&times;</button>
+      </div>`;
+    }).join('');
+  }
+
+  function renderStats() {
+    const logs = getData('logs');
+    const today = new Date().toISOString().slice(0, 10);
+    const todayLogs = logs.filter(l => l.datetime.startsWith(today));
+    const thisWeek = logs.filter(l => {
+      const d = new Date(l.datetime);
+      const now = new Date();
+      const weekAgo = new Date(now - 7 * 86400000);
+      return d >= weekAgo;
+    });
+
+    document.getElementById('stats').innerHTML = `
+      <div class="stat-card"><div class="val">${todayLogs.length}</div><div class="lbl">Today's Doses</div></div>
+      <div class="stat-card"><div class="val">${thisWeek.length}</div><div class="lbl">This Week</div></div>
+      <div class="stat-card"><div class="val">${getAllPeptides().length}</div><div class="lbl">Peptides</div></div>
+    `;
+  }
+
+  // ========== CALCULATOR ==========
+  function calculate() {
+    const vialMg = parseFloat(document.getElementById('calc-vial-mg').value);
+    const waterMl = parseFloat(document.getElementById('calc-water-ml').value);
+    const doseMcg = parseFloat(document.getElementById('calc-dose-mcg').value);
+    const syringeUnits = parseInt(document.getElementById('calc-syringe').value);
+
+    if (!vialMg || !waterMl || !doseMcg) return alert('Please fill in all fields.');
+
+    const vialMcg = vialMg * 1000;
+    const concentrationMcgPerMl = vialMcg / waterMl;
+    const doseVolumeMl = doseMcg / concentrationMcgPerMl;
+    const doseUnits = doseVolumeMl * 100; // insulin units
+    const totalDoses = Math.floor(vialMcg / doseMcg);
+
+    document.getElementById('calc-result').innerHTML = `
+      <div class="calc-result">
+        <div class="big-number">${doseUnits.toFixed(1)} units</div>
+        <div class="unit">Draw to the ${doseUnits.toFixed(1)} mark on your syringe</div>
+        <div class="calc-breakdown">
+          <div class="item"><div class="val">${doseVolumeMl.toFixed(3)} mL</div><div class="lbl">Volume per dose</div></div>
+          <div class="item"><div class="val">${concentrationMcgPerMl.toFixed(0)} mcg/mL</div><div class="lbl">Concentration</div></div>
+          <div class="item"><div class="val">${totalDoses}</div><div class="lbl">Total doses per vial</div></div>
+          <div class="item"><div class="val">${(vialMg - (doseMcg/1000)).toFixed(2)} mg</div><div class="lbl">Remaining after 1 dose</div></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function saveCurrentCalc() {
+    const vialMg = document.getElementById('calc-vial-mg').value;
+    const waterMl = document.getElementById('calc-water-ml').value;
+    const doseMcg = document.getElementById('calc-dose-mcg').value;
+    if (!vialMg || !waterMl || !doseMcg) return alert('Run a calculation first.');
+
+    const name = prompt('Name this calculation (e.g. "BPC-157 250mcg"):');
+    if (!name) return;
+
+    const calcs = getData('savedCalcs');
+    const vialMcg = parseFloat(vialMg) * 1000;
+    const doseUnits = (parseFloat(doseMcg) / (vialMcg / parseFloat(waterMl))) * 100;
+
+    calcs.push({ id: Date.now(), name, vialMg, waterMl, doseMcg, units: doseUnits.toFixed(1) });
+    setData('savedCalcs', calcs);
+    renderSavedCalcs();
+  }
+
+  function renderSavedCalcs() {
+    const calcs = getData('savedCalcs');
+    const el = document.getElementById('saved-calcs');
+    if (calcs.length === 0) {
+      el.innerHTML = '<div class="empty-state">No saved calculations yet.</div>';
+      return;
+    }
+    el.innerHTML = calcs.map(c => `
+      <div class="log-entry">
+        <div class="info">
+          <div class="peptide-name">${c.name}</div>
+          <div class="details">${c.vialMg}mg vial + ${c.waterMl}mL water &middot; ${c.doseMcg}mcg dose</div>
+        </div>
+        <span class="dose-badge">${c.units} units</span>
+        <button class="delete-btn" onclick="deleteSavedCalc(${c.id})">&times;</button>
+      </div>
+    `).join('');
+  }
+
+  function deleteSavedCalc(id) {
+    setData('savedCalcs', getData('savedCalcs').filter(c => c.id !== id));
+    renderSavedCalcs();
+  }
+
+  function convert() {
+    const val = parseFloat(document.getElementById('conv-value').value);
+    const type = document.getElementById('conv-type').value;
+    const el = document.getElementById('conv-result');
+    if (!val) { el.textContent = ''; return; }
+
+    const conversions = {
+      'mg-mcg': { result: val * 1000, unit: 'mcg' },
+      'mcg-mg': { result: val / 1000, unit: 'mg' },
+      'ml-units': { result: val * 100, unit: 'units' },
+      'units-ml': { result: val / 100, unit: 'mL' },
+    };
+
+    const c = conversions[type];
+    el.textContent = `= ${c.result} ${c.unit}`;
+  }
+
+  // ========== INVENTORY ==========
+  function addInventory() {
+    const name = document.getElementById('inv-name').value.trim();
+    const mg = parseFloat(document.getElementById('inv-mg').value);
+    const reconDate = document.getElementById('inv-recon-date').value;
+    const expiry = document.getElementById('inv-expiry').value;
+    const source = document.getElementById('inv-source').value;
+    const water = document.getElementById('inv-water').value;
+
+    if (!name || !mg) return alert('Please enter peptide name and vial size.');
+
+    const inv = getData('inventory');
+    inv.push({ id: Date.now(), name, mg, remainingMg: mg, reconDate, expiry, source, water });
+    setData('inventory', inv);
+
+    document.getElementById('inv-name').value = '';
+    document.getElementById('inv-mg').value = '';
+    document.getElementById('inv-source').value = '';
+    document.getElementById('inv-water').value = '';
+
+    renderInventory();
+    refreshPeptideDropdowns();
+  }
+
+  function deleteInventoryItem(id) {
+    setData('inventory', getData('inventory').filter(i => i.id !== id));
+    renderInventory();
+  }
+
+  function renderInventory() {
+    const inv = getData('inventory');
+    const el = document.getElementById('inv-list');
+    if (inv.length === 0) {
+      el.innerHTML = '<div class="empty-state">No vials in inventory.</div>';
+      return;
+    }
+
+    el.innerHTML = inv.map(item => {
+      const pct = (item.remainingMg / item.mg) * 100;
+      const color = pct > 30 ? 'var(--success)' : pct > 10 ? 'var(--warning)' : 'var(--danger)';
+      const statusClass = pct > 30 ? '' : pct > 10 ? 'low' : 'out';
+      const expStr = item.expiry ? ` &middot; Exp: ${item.expiry}` : '';
+      const srcStr = item.source ? ` &middot; ${item.source}` : '';
+
+      return `<div class="inv-item">
+        <div>
+          <div style="font-weight:600;">${item.name}</div>
+          <div class="remaining ${statusClass}">${item.remainingMg.toFixed(2)} / ${item.mg} mg remaining${expStr}${srcStr}</div>
+          <div class="progress-bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
+        </div>
+        <button class="delete-btn" onclick="deleteInventoryItem(${item.id})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.2rem;">&times;</button>
+      </div>`;
+    }).join('');
+  }
+
+  // ========== SCHEDULE ==========
+  function addSchedule() {
+    const peptide = document.getElementById('sched-peptide').value;
+    const dose = document.getElementById('sched-dose').value;
+    const freq = document.getElementById('sched-freq').value;
+    const time = document.getElementById('sched-time').value;
+    const notes = document.getElementById('sched-notes').value;
+
+    if (!peptide || !dose) return alert('Please select a peptide and dose.');
+
+    const scheds = getData('schedules');
+    scheds.push({ id: Date.now(), peptide, dose: parseFloat(dose), freq, time, notes, active: true });
+    setData('schedules', scheds);
+    renderSchedules();
+  }
+
+  function deleteSchedule(id) {
+    setData('schedules', getData('schedules').filter(s => s.id !== id));
+    renderSchedules();
+  }
+
+  function isDueToday(sched) {
+    const logs = getData('logs');
+    const today = new Date().toISOString().slice(0, 10);
+    const todayLogs = logs.filter(l =>
+      l.peptide.toLowerCase() === sched.peptide.toLowerCase() &&
+      l.datetime.startsWith(today)
+    );
+
+    if (sched.freq === 'daily' || sched.freq === '5on2off') return todayLogs.length === 0;
+    if (sched.freq === '2x-daily') return todayLogs.length < 2;
+    if (sched.freq === 'eod') {
+      const lastLog = logs.find(l => l.peptide.toLowerCase() === sched.peptide.toLowerCase());
+      if (!lastLog) return true;
+      const lastDate = new Date(lastLog.datetime);
+      const diffDays = Math.floor((new Date() - lastDate) / 86400000);
+      return diffDays >= 2 || todayLogs.length === 0 && diffDays >= 1;
+    }
+    if (sched.freq === '3x-week') {
+      const weekLogs = logs.filter(l => {
+        const d = new Date(l.datetime);
+        return l.peptide.toLowerCase() === sched.peptide.toLowerCase() && (new Date() - d) < 7 * 86400000;
+      });
+      return weekLogs.length < 3 && todayLogs.length === 0;
+    }
+    if (sched.freq === 'weekly') {
+      const weekLogs = logs.filter(l => {
+        const d = new Date(l.datetime);
+        return l.peptide.toLowerCase() === sched.peptide.toLowerCase() && (new Date() - d) < 7 * 86400000;
+      });
+      return weekLogs.length === 0;
+    }
+    return false;
+  }
+
+  const freqLabels = {
+    'daily': 'Daily',
+    '2x-daily': '2x Daily',
+    'eod': 'Every Other Day',
+    '3x-week': '3x / Week',
+    'weekly': 'Weekly',
+    '5on2off': '5 on / 2 off'
+  };
+
+  function renderSchedules() {
+    const scheds = getData('schedules');
+
+    // Today's schedule
+    const todayEl = document.getElementById('today-schedule');
+    if (scheds.length === 0) {
+      todayEl.innerHTML = '<div class="empty-state">No schedules set up yet.</div>';
+    } else {
+      todayEl.innerHTML = scheds.map(s => {
+        const due = isDueToday(s);
+        return `<div class="schedule-item">
+          <div class="schedule-dot ${due ? 'due' : ''}"></div>
+          <div style="flex:1">
+            <div style="font-weight:600">${s.peptide} - ${s.dose} mcg</div>
+            <div style="font-size:0.85rem;color:var(--text-dim)">${s.time} &middot; ${due ? 'Due today' : 'Done for today'}</div>
+          </div>
+          ${due ? `<button class="btn btn-primary btn-sm" onclick="quickLog('${s.peptide}', ${s.dose})">Log Now</button>` : '<span style="color:var(--success)">&#10003;</span>'}
+        </div>`;
+      }).join('');
+    }
+
+    // All schedules
+    const listEl = document.getElementById('sched-list');
+    if (scheds.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">No schedules.</div>';
+    } else {
+      listEl.innerHTML = scheds.map(s => `
+        <div class="log-entry">
+          <div class="info">
+            <div class="peptide-name">${s.peptide}</div>
+            <div class="details">${s.dose} mcg &middot; ${freqLabels[s.freq]} at ${s.time}${s.notes ? ' &middot; ' + s.notes : ''}</div>
+          </div>
+          <button class="delete-btn" onclick="deleteSchedule(${s.id})">&times;</button>
+        </div>
+      `).join('');
+    }
+  }
+
+  function quickLog(peptide, dose) {
+    const logs = getData('logs');
+    logs.unshift({
+      id: Date.now(),
+      peptide,
+      dose,
+      route: 'Subcutaneous',
+      site: '',
+      datetime: new Date().toISOString().slice(0, 16),
+      notes: 'Quick log from schedule'
+    });
+    setData('logs', logs);
+    updateInventoryUsage(peptide, dose);
+    renderSchedules();
+    renderStats();
+    renderLogs();
+  }
+
+  // ========== DATA MANAGEMENT ==========
+  // Export all data
+  function exportData() {
+    const data = {
+      logs: getData('logs'),
+      inventory: getData('inventory'),
+      schedules: getData('schedules'),
+      savedCalcs: getData('savedCalcs'),
+      exportDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `peptide-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+  }
+
+  // ========== INIT ==========
+  function init() {
+    // Set default datetime to now
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('log-datetime').value = now.toISOString().slice(0, 16);
+    document.getElementById('inv-recon-date').value = now.toISOString().slice(0, 10);
+
+    refreshPeptideDropdowns();
+    renderLogs();
+    renderStats();
+    renderSavedCalcs();
+  }
+
+  init();
+
+  // Register service worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+
+</body>
+</html>
